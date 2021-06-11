@@ -39,7 +39,6 @@ def format_time(elapsed):
     # Format as hh:mm:ss
     return str(datetime.timedelta(seconds=elapsed_rounded))
 
-# Set device
 def get_default_device():
     if torch.cuda.is_available():
         print("Got CUDA!")
@@ -87,7 +86,6 @@ def main(args):
         question_encodings_dict = tokenizer(question, truncation=True, max_length=MAXLEN_question, padding="max_length")
         output_ids.append([x if x!=0 else -100 for x in question_encodings_dict['input_ids']])
 
-    # Convert to torch tensors
     input_ids = torch.tensor(input_ids)
     input_ids = input_ids.long().to(device)
     input_att_msks = torch.tensor(input_att_msks)
@@ -99,7 +97,6 @@ def main(args):
     train_sampler = RandomSampler(train_data)
     train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=args.batch_size)
 
-    # instantiate the model
     model = T5ForConditionalGeneration.from_pretrained("t5-base")
 
 
@@ -111,32 +108,21 @@ def main(args):
                     # weight_decay = 0.01
                     )
 
-    loss_values = []
-
-    # Total number of training steps is number of batches * number of epochs.
     total_steps = len(train_dataloader) * args.n_epochs
-    # Create the learning rate scheduler.
     scheduler = get_linear_schedule_with_warmup(optimizer,
                                                 num_warmup_steps = 0.1*total_steps,
                                                 num_training_steps = total_steps)
 
     for epoch in range(args.n_epochs):
-        # Perform one full pass over the training set.
         print("")
         print('======== Epoch {:} / {:} ========'.format(epoch + 1, args.n_epochs))
         print('Training...')
-        # Measure how long the training epoch takes.
         t0 = time.time()
-        # Reset the total loss for this epoch.
         total_loss = 0
         model.train()
-    # For each batch of training data...
         for step, batch in enumerate(train_dataloader):
-            # Progress update every 40 batches.
             if step % 40 == 0 and not step == 0:
-                # Calculate elapsed time in minutes.
                 elapsed = format_time(time.time() - t0)
-                # Report progress.
                 print('  Batch {:>5,}  of  {:>5,}.    Elapsed: {:}.'.format(step, len(train_dataloader), elapsed))
             b_input_ids = batch[0].to(device)
             b_att_msks = batch[1].to(device)
@@ -147,26 +133,14 @@ def main(args):
             print(loss.item())
             total_loss += loss.item()
             loss.backward()
-            # Clip the norm of the gradients to 1.0.
-            # This is to help prevent the "exploding gradients" problem.
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-            # Update parameters and take a step using the computed gradient.
-            # The optimizer dictates the "update rule"--how the parameters are
-            # modified based on their gradients, the learning rate, etc.
             optimizer.step()
-            # Update the learning rate.
             scheduler.step()
-        # Calculate the average loss over the training data.
         avg_train_loss = total_loss / len(train_dataloader)
-
-        # Store the loss value for plotting the learning curve.
-        loss_values.append(avg_train_loss)
-
         print("")
         print("  Average training loss: {0:.2f}".format(avg_train_loss))
         print("  Training epoch took: {:}".format(format_time(time.time() - t0)))
 
-    # Save the model to a file
     file_path = args.save_path+'t5_gen_seed'+str(args.seed)+'.pt'
     torch.save(model, file_path)
 
