@@ -78,7 +78,7 @@ def main(args):
         #     break
         print(count)
         assert len(sample["context"]) == 2
-        context = sample["context"][0][1] + " " + sample["context"][1][1]
+        context = sample["context"][0][1][0] + " " + sample["context"][1][1][0]
         context_encodings_dict = tokenizer(context, truncation=True, max_length=MAXLEN_context, padding="max_length")
         input_ids.append(context_encodings_dict['input_ids'])
         input_att_msks.append(context_encodings_dict['attention_mask'])
