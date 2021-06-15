@@ -68,7 +68,7 @@ def main(args):
 
     for sample in all_samples:
         assert len(sample["context"]) == 2
-        context = sample["context"][0][1][0] + " " + sample["context"][1][1][0]
+        context = "".join(sample["context"][0][1]) + " " + "".join(sample["context"][1][1])
         context = context.replace('\n', '')
         count+=1
         # if count==20:

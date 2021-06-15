@@ -77,7 +77,7 @@ def main(args):
         # if count==10:
         #     break
         assert len(sample["context"]) == 2
-        context = sample["context"][0][1][0] + " " + sample["context"][1][1][0]
+        context = "".join(sample["context"][0][1]) + " " + "".join(sample["context"][1][1])
         if count%100==0:
             print(count)
             print(context)
